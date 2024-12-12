@@ -71,9 +71,9 @@ void learn(char* infile, char* outfile,int width, int height,int itterations){
   fclose(write_test);
   printf("alocating memory..\n");
 
-  struct net_stack* nnR = setup_nn(width*height,ACTIVATION_RELU,3);
-  struct net_stack* nnG = setup_nn(width*height,ACTIVATION_RELU,3);
-  struct net_stack* nnB = setup_nn(width*height,ACTIVATION_RELU,3);
+  struct net_stack* nnR = setup_nn(width*height,ACTIVATION_RELU,1);
+  struct net_stack* nnG = setup_nn(width*height,ACTIVATION_RELU,1);
+  struct net_stack* nnB = setup_nn(width*height,ACTIVATION_RELU,1);
 
   float* R=malloc(sizeof(float)*(width*height));
   float* G=malloc(sizeof(float)*(width*height));
