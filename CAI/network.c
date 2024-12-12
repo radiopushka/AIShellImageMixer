@@ -4,6 +4,7 @@
 #include <math.h>
 
 #define EULER 2.7182818284
+#define PI 3.1415926535898
 
 //basic functions
 //
@@ -104,7 +105,7 @@ void activate(struct nn* network){
   while(optr < oend){
     switch(type){
       case ACTIVATION_TAN:
-        *optr = atan(*optr);
+        *optr = 0.5+(atan(*optr))/PI;
         break;
       case ACTIVATION_SIN:
         if(*optr < 0)

@@ -23,5 +23,10 @@ void free_cfg_data(struct config_line* cline);
 
 void close_config();
 //close the configuration file
+//
+//usefull function
+int is_float_number(char* string);
+
+
 
 #endif // !CONFIGS
