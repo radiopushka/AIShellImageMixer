@@ -10,7 +10,7 @@ This project provides a powerful neural network engine designed for image proces
 The engine is invoked using the following command structure:
 
 ```bash
-./<program_name> <mode> [arguments]
+./nnNet <mode> [arguments]
 ```
 
 ### Modes
@@ -24,12 +24,12 @@ The engine is invoked using the following command structure:
 * `<output file>`: Name of the file to store the trained model.
 * `<image width>`: Integer value representing the width of training images in pixels.
 * `<image height>`: Integer value representing the height of training images in pixels.
-* `<iterations>`: Integer value specifying the number of training iterations.
+* `<iterations>`: Integer value specifying the number of training iterations or the lowest error percent at which to stop training.
 
 **Example (learn mode):**
 
 ```bash
-./<program_name> learn config.txt model.nn 32 32 1000
+./nnNet learn config.txt model.nn 32 32 1000
 ```
 
 This command trains a neural network using the `<config file>` file, stores the trained model in `<model name>`, and uses images of size 32x32 pixels for 1000 iterations.
@@ -45,7 +45,7 @@ This command trains a neural network using the `<config file>` file, stores the 
 **Example (run mode):**
 
 ```bash
-./<program_name> run model.nn input.png 32 32 output.png
+./nnNet run model.nn input.png 32 32 output.png
 ```
 
 This command applies the `model.nn` model to the `input.png` image (32x32 pixels) and saves the processed result to `output.png`. If no output file is specified, the processed data is printed to the console.
