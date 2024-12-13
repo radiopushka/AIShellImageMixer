@@ -37,7 +37,7 @@ The engine is invoked using the following command structure:
   * high learn rate speeds (greater than 0.01) will lead to poor accuracy due to the "roughness" of each gradient descend.
 
 * IMPORTANT: In order to achieve this performance you must use Gentoo and recompile the gcc compiler so that it can optimize the program as best it can.
-* * usually an update emerge -avuDN @world is sufficient after a fresh install.
+  * usually an update emerge -avuDN @world is sufficient after a fresh install.
 * RAM usage = `((Width*Height)^2)*24*(10^(-9))` Giga Bytes
 
 **Example (learn mode):**
