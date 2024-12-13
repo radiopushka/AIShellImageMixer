@@ -31,7 +31,8 @@ The engine is invoked using the following command structure:
   * 6 images of different anime girls with different features and different hair color.
   * Two images for each hair color and a total of three different hair colors
   * Learning took around an hour total with a learn rate of 0.01 per image
-  * each back-propagation per image pair took less than or close to half~one second. This is faster than Pytorch on CPU.
+  * each back-propagation per image pair took half a second. This is faster than Pytorch on CPU.
+  * it can process two 128x128 RGB images with backwards propagation in one second.
   * It was able to distinguish all the images succesfully after training.
   * high learn rate speeds (greater than 0.01) will lead to poor accuracy due to the "roughness" of each gradient descend.
 
