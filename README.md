@@ -27,7 +27,7 @@ The engine is invoked using the following command structure:
 * `<iterations>`: Integer value specifying the number of training iterations or the lowest error percent at which to stop training.
 
 ### Tests 
-* Tested on an i5 12th gen with a small dataset of 6 128x128 png images. 
+* Tested on an i5 12th gen with a small dataset of 6 128x128 RGB png images. 
   * 6 images of different anime girls with different features and different hair color.
   * Two images for each hair color and a total of three different hair colors
   * Learning took around an hour total with a learn rate of 0.01 per image
