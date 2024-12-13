@@ -1,7 +1,9 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include <string.h>
+#include <pthread.h>
 #include <ctype.h>
+#include<unistd.h>
 #include <math.h>
 #include "imageio.h"
 #include "CAI/nnnet.h"
@@ -58,10 +60,65 @@ float nn_compare(struct net_stack* stk, float* input, float* expected, int size)
   return fabs(average_error);
 }
 
+//multi threaded learning
+
+int count=0;
+
+float cur_weight=0;
+
+struct net_stack* nnT1;
+struct net_stack* nnT2;
+
+float* T1in;
+float* T2in;
+
+float* T1out;
+float* T2out;
+
+int exit_s=0;
+
+pthread_mutex_t tm1;
+pthread_mutex_t tm1_h;
+
+pthread_mutex_t tm2;
+pthread_mutex_t tm2_h;
+
+void *thread1(void* unused){
+  while(exit_s!=1){
+  pthread_mutex_lock(&tm1);
+
+  if(exit_s != 1) 
+    nn_back_prop(nnT1,T1in,T1out,cur_weight);
+
+  count--;
+  pthread_mutex_unlock(&tm1);
+  pthread_mutex_lock(&tm1_h);
+  pthread_mutex_unlock(&tm1_h);
+  }
+  return NULL;
+}
+
+void *thread2(void* unused){
+  while(exit_s!=1){
+  pthread_mutex_lock(&tm2);
+  
+  if(exit_s != 1)
+    nn_back_prop(nnT2,T2in,T2out,cur_weight);
+
+  count--;
+  pthread_mutex_unlock(&tm2);
+  pthread_mutex_lock(&tm2_h);
+  pthread_mutex_unlock(&tm2_h);
+  }
+  return NULL;
+}
 
 
 void learn(char* infile, char* outfile,int width, int height,int itterations,float stop_at){
   printf("starting..\n");
+
+  pthread_t t1;
+  pthread_t t2;
 
   FILE* write_test = fopen(outfile,"wb");
   if(!write_test){
@@ -84,9 +141,33 @@ void learn(char* infile, char* outfile,int width, int height,int itterations,flo
   float* Ge=malloc(sizeof(float)*(width*height));
   float* Be=malloc(sizeof(float)*(width*height));
 
+  T1in = G;
+  T2in = B;
+
+  T1out = Ge;
+  T2out = Be;
+
+  nnT1 = nnG;
+  nnT2 = nnB;
+
 
   printf("starting training..\n");
 //put the following in a loop
+  //
+float max=0;
+
+pthread_mutex_init(&tm1,NULL);
+pthread_mutex_init(&tm1_h,NULL);
+pthread_mutex_init(&tm2,NULL);
+pthread_mutex_init(&tm2_h,NULL);
+  
+pthread_mutex_lock(&tm1);
+pthread_mutex_lock(&tm2);
+
+exit_s=0;
+
+pthread_create(&t1,NULL,thread1,NULL);
+pthread_create(&t2,NULL,thread2,NULL);
 
 for(int i = 0;i < itterations || itterations == -1 ;i++){
   if(init_config(infile)==-1){
@@ -94,9 +175,12 @@ for(int i = 0;i < itterations || itterations == -1 ;i++){
     free(R);free(G);free(B);
     free(Re);free(Ge);free(Be);
     nn_free(nnR);nn_free(nnG);nn_free(nnB);
+    pthread_mutex_destroy(&tm1);pthread_mutex_destroy(&tm2);
+    pthread_mutex_destroy(&tm1_h);pthread_mutex_destroy(&tm2_h);
     return;
   }
   struct config_line cline;
+  max=0;
   while(read_config_line(&cline)!=-1){
     if(rescaled_read(cline.input_image,R,G,B,width,height)==-1){
       printf("failed to open image %s\n",cline.input_image);
@@ -106,6 +190,8 @@ for(int i = 0;i < itterations || itterations == -1 ;i++){
       free(R);free(G);free(B);
       free(Re);free(Ge);free(Be);
       nn_free(nnR);nn_free(nnG);nn_free(nnB);
+      pthread_mutex_destroy(&tm1);pthread_mutex_destroy(&tm2);
+      pthread_mutex_destroy(&tm1_h);pthread_mutex_destroy(&tm2_h);
       return;
     }
     prepare_data(R,width*height);
@@ -121,6 +207,8 @@ for(int i = 0;i < itterations || itterations == -1 ;i++){
         free(R);free(G);free(B);
         free(Re);free(Ge);free(Be);
         nn_free(nnR);nn_free(nnG);nn_free(nnB);
+        pthread_mutex_destroy(&tm1);pthread_mutex_destroy(&tm2);
+        pthread_mutex_destroy(&tm1_h);pthread_mutex_destroy(&tm2_h);
         return;
 
       }
@@ -138,11 +226,26 @@ for(int i = 0;i < itterations || itterations == -1 ;i++){
       Be[cline.position_recog]=1;
     }
 
-    nn_back_prop(nnR,R,Re,cline.weight);
-    nn_back_prop(nnG,G,Ge,cline.weight);
-    nn_back_prop(nnB,B,Be,cline.weight);
 
-    
+    cur_weight = cline.weight;
+
+    count = 2;
+
+    pthread_mutex_lock(&tm1_h);
+    pthread_mutex_lock(&tm2_h);
+    pthread_mutex_unlock(&tm1);
+    pthread_mutex_unlock(&tm2);
+    nn_back_prop(nnR,R,Re,cline.weight);
+    //nn_back_prop(nnG,G,Ge,cline.weight);
+    //nn_back_prop(nnB,B,Be,cline.weight);
+
+
+    while(count!=0);
+    pthread_mutex_lock(&tm1);
+    pthread_mutex_lock(&tm2);
+    pthread_mutex_unlock(&tm1_h);
+    pthread_mutex_unlock(&tm2_h);
+
 
 
     float ravg=nn_compare(nnR, R , Re, width*height);
@@ -153,12 +256,16 @@ for(int i = 0;i < itterations || itterations == -1 ;i++){
     printf("error for %s is %g\n",cline.input_image,error_average*100);
     free_cfg_data(&cline);
 
-    if(error_average*100 < stop_at && itterations ==-1){
+    if(error_average*100 > max){
+        max = error_average*100;
+      }
+           
+  }
+  if(max < stop_at && itterations ==-1){
       i=0;
       itterations = 0;
       }
-        
-  }
+
   printf("itteration: %d\n",i);
   close_config();
   }
@@ -175,7 +282,28 @@ for(int i = 0;i < itterations || itterations == -1 ;i++){
   nn_to_file(nnB,fstring);
 
   printf("learning complete data written to %s[R,G,B] \n",outfile);
+  
+  exit_s=1;
+  count = 2;
+  pthread_mutex_lock(&tm1_h);
+  pthread_mutex_lock(&tm2_h);
+  pthread_mutex_unlock(&tm1);
+  pthread_mutex_unlock(&tm2);
 
+  while(count!=0);
+
+
+  pthread_mutex_lock(&tm1);
+  pthread_mutex_lock(&tm2);
+  pthread_mutex_unlock(&tm1_h);
+  pthread_mutex_unlock(&tm2_h);
+
+
+  pthread_join(t1,NULL);
+  pthread_join(t2,NULL);
+
+  pthread_mutex_destroy(&tm1);pthread_mutex_destroy(&tm2);
+  pthread_mutex_destroy(&tm1_h);pthread_mutex_destroy(&tm2_h);
 
 
   nn_free(nnR);nn_free(nnG);nn_free(nnB);
