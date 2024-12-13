@@ -15,7 +15,7 @@ The engine is invoked using the following command structure:
 
 ### Modes
 
-* **learn:** Trains a new neural network model based on the provided configuration file.
+* **learn:** Trains a new neural network model based on the provided configuration file. It opens three threads to speed up the process.
 * **run:** Applies a trained model to a specified input image for prediction or processing.
 
 ### Arguments (learn mode)
@@ -25,6 +25,19 @@ The engine is invoked using the following command structure:
 * `<image width>`: Integer value representing the width of training images in pixels.
 * `<image height>`: Integer value representing the height of training images in pixels.
 * `<iterations>`: Integer value specifying the number of training iterations or the lowest error percent at which to stop training.
+
+### Tests 
+* Tested on an i5 12th gen with a small dataset of 6 128x128 png images. 
+* 6 images of different anime girls with different features and different hair color.
+* Two images for each hair color and a total of three different hair colors
+* Learning took around 10-20 minutes total with a learn rate of 0.01 per image
+* each back-propagation per image pair took less than or close to half~one second. This is faster than Pytorch on CPU.
+* It was able to distinguish all the images succesfully after training.
+* high learn rate speeds (greater than 0.01) will lead to poor accuracy due to the "roughness" of each gradient descend.
+
+* Tested on Intel Xenon
+* much slower on Xenon
+* avoid using this CPU if you can
 
 **Example (learn mode):**
 
