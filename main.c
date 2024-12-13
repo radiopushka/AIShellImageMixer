@@ -83,6 +83,9 @@ pthread_mutex_t tm1_h;
 pthread_mutex_t tm2;
 pthread_mutex_t tm2_h;
 
+
+pthread_mutex_t counter;
+
 void *thread1(void* unused){
   while(exit_s!=1){
   pthread_mutex_lock(&tm1);
@@ -90,7 +93,12 @@ void *thread1(void* unused){
   if(exit_s != 1) 
     nn_back_prop(nnT1,T1in,T1out,cur_weight);
 
+
+  pthread_mutex_lock(&counter);
   count--;
+  pthread_mutex_unlock(&counter);
+
+
   pthread_mutex_unlock(&tm1);
   pthread_mutex_lock(&tm1_h);
   pthread_mutex_unlock(&tm1_h);
@@ -105,7 +113,11 @@ void *thread2(void* unused){
   if(exit_s != 1)
     nn_back_prop(nnT2,T2in,T2out,cur_weight);
 
+  pthread_mutex_lock(&counter);
   count--;
+  pthread_mutex_unlock(&counter);
+
+
   pthread_mutex_unlock(&tm2);
   pthread_mutex_lock(&tm2_h);
   pthread_mutex_unlock(&tm2_h);
@@ -160,6 +172,7 @@ pthread_mutex_init(&tm1,NULL);
 pthread_mutex_init(&tm1_h,NULL);
 pthread_mutex_init(&tm2,NULL);
 pthread_mutex_init(&tm2_h,NULL);
+pthread_mutex_init(&counter,NULL);
   
 pthread_mutex_lock(&tm1);
 pthread_mutex_lock(&tm2);
@@ -177,6 +190,7 @@ for(int i = 0;i < itterations || itterations == -1 ;i++){
     nn_free(nnR);nn_free(nnG);nn_free(nnB);
     pthread_mutex_destroy(&tm1);pthread_mutex_destroy(&tm2);
     pthread_mutex_destroy(&tm1_h);pthread_mutex_destroy(&tm2_h);
+    pthread_mutex_destroy(&counter);
     return;
   }
   struct config_line cline;
@@ -192,6 +206,7 @@ for(int i = 0;i < itterations || itterations == -1 ;i++){
       nn_free(nnR);nn_free(nnG);nn_free(nnB);
       pthread_mutex_destroy(&tm1);pthread_mutex_destroy(&tm2);
       pthread_mutex_destroy(&tm1_h);pthread_mutex_destroy(&tm2_h);
+      pthread_mutex_destroy(&counter);
       return;
     }
     prepare_data(R,width*height);
@@ -209,6 +224,7 @@ for(int i = 0;i < itterations || itterations == -1 ;i++){
         nn_free(nnR);nn_free(nnG);nn_free(nnB);
         pthread_mutex_destroy(&tm1);pthread_mutex_destroy(&tm2);
         pthread_mutex_destroy(&tm1_h);pthread_mutex_destroy(&tm2_h);
+        pthread_mutex_destroy(&counter);
         return;
 
       }
@@ -240,7 +256,16 @@ for(int i = 0;i < itterations || itterations == -1 ;i++){
     //nn_back_prop(nnB,B,Be,cline.weight);
 
 
-    while(count!=0);
+    while(1){
+        pthread_mutex_lock(&counter);
+        if(count==0)
+          break;
+        
+        pthread_mutex_unlock(&counter);
+    }
+
+    pthread_mutex_unlock(&counter);
+
     pthread_mutex_lock(&tm1);
     pthread_mutex_lock(&tm2);
     pthread_mutex_unlock(&tm1_h);
@@ -290,8 +315,15 @@ for(int i = 0;i < itterations || itterations == -1 ;i++){
   pthread_mutex_unlock(&tm1);
   pthread_mutex_unlock(&tm2);
 
-  while(count!=0);
+  while(1){
+        pthread_mutex_lock(&counter);
+        if(count==0)
+          break;
+        
+        pthread_mutex_unlock(&counter);
+  }
 
+  pthread_mutex_unlock(&counter);
 
   pthread_mutex_lock(&tm1);
   pthread_mutex_lock(&tm2);
@@ -305,6 +337,7 @@ for(int i = 0;i < itterations || itterations == -1 ;i++){
   pthread_mutex_destroy(&tm1);pthread_mutex_destroy(&tm2);
   pthread_mutex_destroy(&tm1_h);pthread_mutex_destroy(&tm2_h);
 
+  pthread_mutex_destroy(&counter);
 
   nn_free(nnR);nn_free(nnG);nn_free(nnB);
 }
