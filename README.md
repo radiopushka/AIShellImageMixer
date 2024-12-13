@@ -38,7 +38,7 @@ The engine is invoked using the following command structure:
 * Tested on Intel Xenon
   * much slower on Xenon
   * avoid using this CPU if you can
-* RAM usage = ((Width*Height)^2)*24*(10^(-9)) Giga Bytes
+* RAM usage = `((Width*Height)^2)*24*(10^(-9))` Giga Bytes
 
 **Example (learn mode):**
 
