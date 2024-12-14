@@ -23,6 +23,7 @@ void print_help(){
   char* name = PROGRAM_NAME;
   printf("arguments: %s <mode>\nmode: learn:\n%s learn <config file> <output file> <image width> <image height> <itterations or min percent error>\nimage height and width need to be consistent accross all images specified in the file\n\nmode: run\n%s run <model_name> <input image> <image width> <image height> (output file PNG, optional)\nif the output file is not specified raw image data will be sent to stdout\ninput image dimensions must match those used to train the neural network\n",
          name,name,name);
+  printf("%s learn <config file> <output file> <image width> <image height> <- to run untill all logical comparisons pass\n",name);
   printf("console run mode:\n");
   printf("%s runc <model name> <image width> <image height>\n",name);
   printf("\nit is important that you pre process all the incoming images to have the same width and height\n");
@@ -42,19 +43,31 @@ int get_int_p(char* string){
   return atoi(string);
 }
 
-float nn_compare(struct net_stack* stk, float* input, float* expected, int size){
+float nn_compare(struct net_stack* stk, float* input, float* expected, int size,int* failed,int expected_l){
   float check[size];
   nn_fwd(stk,input,check);
 
   float average_error=0;
   float error;
+  float max=0;
+  int index=-1;
   for(int i = 0; i < size; i++){
     error = expected[i] - check[i];
+
+    if(check[i]>max){
+      index=i;
+      max=check[i];
+    }
+
     if(i==0)
       average_error = error;
     else 
       average_error = (average_error + error)/2;
 
+  }
+  if(index != expected_l){
+    if(expected_l!=-1)
+      *failed=1;
   }
 
   return fabs(average_error);
@@ -194,6 +207,7 @@ for(int i = 0;i < itterations || itterations == -1 ;i++){
     return;
   }
   struct config_line cline;
+  int failed_logic=0;
   max=0;
   while(read_config_line(&cline)!=-1){
     if(rescaled_read(cline.input_image,R,G,B,width,height)==-1){
@@ -271,11 +285,14 @@ for(int i = 0;i < itterations || itterations == -1 ;i++){
     pthread_mutex_unlock(&tm1_h);
     pthread_mutex_unlock(&tm2_h);
 
+    int pass_in=cline.position_recog;
+    if(cline.type==TYPE_NN_IMAGE){
+        pass_in=-1;
+      }
 
-
-    float ravg=nn_compare(nnR, R , Re, width*height);
-    float gavg=nn_compare(nnG, G , Ge, width*height);
-    float bavg=nn_compare(nnB, B , Be, width*height);
+    float ravg=nn_compare(nnR, R , Re, width*height, &failed_logic ,pass_in);
+    float gavg=nn_compare(nnG, G , Ge, width*height, &failed_logic ,pass_in);
+    float bavg=nn_compare(nnB, B , Be, width*height, &failed_logic ,pass_in);
 
     float error_average = (ravg + gavg + bavg)/3;
     printf("error for %s is %g\n",cline.input_image,error_average*100);
@@ -285,6 +302,11 @@ for(int i = 0;i < itterations || itterations == -1 ;i++){
         max = error_average*100;
       }
            
+  }
+  if(itterations == -1 && stop_at < 0 && failed_logic==0 ){
+    i=0;
+    itterations = 0;
+    printf("logic success\n");
   }
   if(max < stop_at && itterations ==-1){
       i=0;
@@ -614,29 +636,42 @@ int main(int argn, char* argv[]){
   }
 
   if(strcmp(argv[1],"learn")==0){
-    if(argn != 7){
+    if(argn != 7 && argn != 6){
       print_help();
       print_config_format();
       printf("\nlearn expects 5 arguments two files and three integers\n");
+      printf("\nlearn also expects 4 arguments two files and two integers\n");
       return 0;
     }
     int width = get_int_p(argv[4]);
     int height = get_int_p(argv[5]);
-
-    if(is_float_number(argv[6])!=-1){
-
-      learn(argv[2],argv[3],width,height,-1,atof(argv[6]));
-      return 0;
-    }
-
-    int itter = get_int_p(argv[6]);
-    if(width == -1 || height == -1 || itter == -1){
+  
+    if(width == -1 || height == -1 ){
       print_help();
       printf("width and height and itterations must be an integer\n");
       return 0;
     }
-    learn(argv[2],argv[3],width,height,itter,0);
-    return 0;
+
+    if(argn == 6){
+      printf("running until all logical comparisons are correct\n");
+      learn(argv[2],argv[3],width,height,-1,-1);
+      return 0;
+
+    }
+    int itter = get_int_p(argv[6]);
+    if(itter != -1){
+      printf("runnning for %d trials\n",itter);
+      printf("add a decimal point to run untill percent error is lower than...\n");
+      learn(argv[2],argv[3],width,height,itter,0);
+      return 0;
+    }
+
+    if(is_float_number(argv[6])!=-1){
+      printf("running until percent error is under %g\n",atof(argv[6]));
+      learn(argv[2],argv[3],width,height,-1,atof(argv[6]));
+      return 0;
+    }
+
   } 
 
 if(strcmp(argv[1],"runc")==0){
