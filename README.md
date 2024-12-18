@@ -37,7 +37,8 @@ The engine is invoked using the following command structure:
   * high learn rate speeds (greater than 0.01) will lead to poor accuracy due to the "roughness" of each gradient descend.
 
 
-* RAM usage = `((Width*Height)^2)*24*(10^(-9))` Giga Bytes
+* RAM usage = `((Width*Height)^2)*8*(10^(-9))` Giga Bytes for Black and White
+* RAM usage = `((Width*Height*3)^2)*8*(10^(-9))` Giga Bytes for RGB
 
 **Example (learn mode):**
 
