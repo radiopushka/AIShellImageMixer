@@ -46,7 +46,7 @@ int image_write(char* image,float* In,int width,int height,int RGB){
 
   for(int i =0 ; i < height;i++){
     for(int i2 = 0; i2 < width*3;){
-      if(RGB==1){
+      if(RGB>1){
         rows[i][i2++] = *In;
         In++;
         rows[i][i2++] = *In;

@@ -53,7 +53,7 @@ int rescaled_read(char* image,float* out,int width,int height,int RGB){
       i3=height-1;
     }
     for(i2=i1*xend;i2<(i1*xend+xend);){
-      if(RGB==1){
+      if(RGB>1){
         *out=rows[i3][i4];
         out++;
         *out=rows[i3][i4+1];

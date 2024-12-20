@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <string.h>
 
 #define EULER 2.7182818284
 #define PI 3.1415926535898
@@ -15,20 +16,18 @@ struct nn* make_network(int size,int activation_type){
   network -> activation_type = activation_type;
   int i;
   // allocate memory
+  size_t gsize = sizeof(float)*size;
+  float* output_buff = malloc(gsize);
+  memset(output_buff,0,gsize);
 
-  float* output_buff = malloc(sizeof(float)*size);
-  for(i=0;i<size;i++){
-    output_buff[i]=0;
-  }
-
-  float* weight_buff = malloc((sizeof(float)*size)*size);
+  float* weight_buff = malloc(gsize*size);
   float cweight = 1.0/size;
   for(i=0;i<size*size;i++){
     weight_buff[i]=cweight;
   }
   network -> outputs = output_buff;
   network -> weights = weight_buff;
-  network -> errors = malloc(sizeof(float)*size);
+  network -> errors = malloc(gsize);
   return network;
 }
 
@@ -85,7 +84,6 @@ void propagate(float* inputs,struct nn* network){
 
   for(iptr=inputs;iptr < iptr_end;iptr++){
     load = *iptr;
-    optr = ostart;
     for(optr=ostart;optr < oend;optr++){
       *optr = *optr + (load * (*wpointer));
       wpointer++;
@@ -126,20 +124,19 @@ void activate(struct nn* network){
 //this is for when you need to match it with the output data
 void back_propagation_tail(struct nn* network, float* outputs){
 
-  float* optr = network -> outputs;
+  float* optr;
   float* oend = network -> outputs + network -> output_size;
   float* oshibki = network -> errors;
   
   float v_z;
 
-  while(optr < oend){
+  for(optr = network ->outputs ;optr < oend; optr++){
   
     v_z = *optr;
     //*oshibki = (v_z) * (1 - v_z) * (*outputs - v_z);
     *oshibki = (*outputs - v_z);
       
     outputs++;
-    optr++;
     oshibki++;
   }
 
@@ -147,7 +144,7 @@ void back_propagation_tail(struct nn* network, float* outputs){
 } 
 // the first argument is the neural network that is before in forward propagation
 void back_propagation_middle(struct nn* before, struct nn* after, float learn_rate){
-  float* vhod = before -> outputs;
+  float* vhod;
   float* vkonets = before -> outputs + before -> output_size;
 
   float* weights = after -> weights;
@@ -163,16 +160,11 @@ void back_propagation_middle(struct nn* before, struct nn* after, float learn_ra
   float etmp;
   float change;
 
+  memset(errorsi,0,sizeof(float)*(before -> output_size));
 
-  while(errorsi < error_end){
-    *errorsi = 0;
-    errorsi++;
-  }
+  for(vhod=before->outputs;vhod < vkonets;vhod++){
 
-  while(vhod < vkonets){
-    errorsi = estart;
-
-    while(errorsi < error_end){
+   for(errorsi=estart;errorsi < error_end;errorsi++){
       change = *vhod;
       //etmp = (*vhod) * (1 - *vhod) * ((*weights) * (*errorsw));
       etmp = (*weights) * (*errorsw);
@@ -181,14 +173,12 @@ void back_propagation_middle(struct nn* before, struct nn* after, float learn_ra
 
       change = learn_rate * etmp * change;
 
-      errorsi++;
       *weights = change + (*weights);
 
       weights++;
     }
 
     errorsw = eswst;
-    vhod++;
   }
 
 
@@ -196,7 +186,7 @@ void back_propagation_middle(struct nn* before, struct nn* after, float learn_ra
 }
 
 void back_propagation_head(float* in,struct nn* after,float learn_rate){
-  float* vhod = in;
+  float* vhod;
   float* vkonets = in + after -> output_size;
 
   float* weights = after -> weights;
@@ -211,14 +201,13 @@ void back_propagation_head(float* in,struct nn* after,float learn_rate){
   float change;
 
 
-  while(vhod < vkonets){
+  for(vhod=in;vhod < vkonets;vhod++){
 
-    while(errorsw < error_end){
+    for(errorsw=eswst;errorsw < error_end;errorsw++){
       change = *vhod;
 
       etmp = (*weights) * (*errorsw);
 
-      errorsw++;
 
       change = learn_rate * etmp * change;
 
@@ -226,8 +215,6 @@ void back_propagation_head(float* in,struct nn* after,float learn_rate){
 
       weights++;
     }
-    errorsw = eswst;
-    vhod++;
   }
 
 }

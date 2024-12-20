@@ -9,6 +9,7 @@
 #include "config/CF.h"
 
 char* PROGRAM_NAME;
+int multiplier=1;
 
 
 void print_config_format(){
@@ -87,11 +88,11 @@ void learn(char* infile, char* outfile,int width, int height,int itterations,flo
   fclose(write_test);
   printf("alocating memory..\n");
 
-  struct net_stack* nn = setup_nn(width*height,ACTIVATION_NIL,1);
+  struct net_stack* nn = setup_nn(width*height*multiplier,ACTIVATION_NIL,1);
 
-  float* In=malloc(sizeof(float)*(width*height));
+  float* In=malloc(sizeof(float)*(width*height*multiplier));
 
-  float* Out=malloc(sizeof(float)*(width*height));
+  float* Out=malloc(sizeof(float)*(width*height*multiplier));
 
 
 
@@ -114,7 +115,7 @@ for(int i = 0;i < itterations || itterations == -1 ;i++){
   int failed_logic=0;
   max=0;
   while(read_config_line(&cline)!=-1){
-    if(rescaled_read(cline.input_image,In,width,height,0)==-1){
+    if(rescaled_read(cline.input_image,In,width,height,multiplier)==-1){
       printf("failed to open image %s\n",cline.input_image);
       printf("abort\n");
       free_cfg_data(&cline);
@@ -128,7 +129,7 @@ for(int i = 0;i < itterations || itterations == -1 ;i++){
     prepare_data(In,width*height);
 
     if(cline.type==TYPE_NN_IMAGE){
-      if(rescaled_read(cline.output_image,Out,width,height,0)==-1){
+      if(rescaled_read(cline.output_image,Out,width,height,multiplier)==-1){
         printf("failed to open image %s\n",cline.output_image);
         printf("abort\n");
         free_cfg_data(&cline);
@@ -140,10 +141,10 @@ for(int i = 0;i < itterations || itterations == -1 ;i++){
         return;
 
       }
-    prepare_data(Out,width*height);
+    prepare_data(Out,width*height*multiplier);
 
     }else{
-      bzero(Out,sizeof(float)*(width*height));
+      bzero(Out,sizeof(float)*(width*height*multiplier));
       printf("pos:%d\n",cline.position_recog);
       Out[cline.position_recog]=1;
     }
@@ -159,7 +160,7 @@ for(int i = 0;i < itterations || itterations == -1 ;i++){
         pass_in=-1;
       }
 
-    float error_average=nn_compare(nn, In , Out, width*height, &failed_logic ,pass_in);
+    float error_average=nn_compare(nn, In , Out, width*height*multiplier, &failed_logic ,pass_in);
 
     printf("error for %s is %g\n",cline.input_image,error_average*100);
     free_cfg_data(&cline);
@@ -217,9 +218,9 @@ int load_test_memory(struct net_mem* mem_container,char* net_name_path,int width
     return -1;
   }
 
-  mem_container->In=malloc(sizeof(float)*(width*height));
+  mem_container->In=malloc(sizeof(float)*(width*height*multiplier));
 
-  mem_container->Out=malloc(sizeof(float)*(width*height));
+  mem_container->Out=malloc(sizeof(float)*(width*height*multiplier));
 
   mem_container->nn=nn;
 
@@ -234,11 +235,11 @@ void free_test_memory(struct net_mem* mem_container){
 }
 
 void mem_process_data(struct net_mem* mem,int width,int height){
-    prepare_data(mem->In,width*height);
+    prepare_data(mem->In,width*height*multiplier);
 
     nn_fwd(mem->nn,mem->In,mem->Out);
 
-    revert_data(mem->Out,width*height);
+    revert_data(mem->Out,width*height*multiplier);
 
 }
 
@@ -246,7 +247,7 @@ void print_mem_data(struct net_mem* mem,int width,int height){
       float avg_max=0;
       int max_index=-1;
       float prev=0;
-      for(int i = 0; i < width*height;i++){
+      for(int i = 0; i < width*height*multiplier;i++){
         float avg=mem->Out[i];
         if(prev!=avg)
           printf("%d:%g ",i,avg/3);
@@ -270,7 +271,7 @@ void run_test(char* net_name_path,char* input_image,char* output,int width,int h
   if(load_test_memory(&memc,net_name_path,width,height)==-1)
     return;
 
-   if(rescaled_read(input_image,memc.In,width,height,0)==-1){
+   if(rescaled_read(input_image,memc.In,width,height,multiplier)==-1){
         printf("failed to open image %s\n",input_image);
         printf("abort\n");
         free_test_memory(&memc);
@@ -292,7 +293,7 @@ void run_test(char* net_name_path,char* input_image,char* output,int width,int h
 
     }
 
-   if(image_write(output,memc.Out,width,height,0) ==-1){
+   if(image_write(output,memc.Out,width,height,multiplier) ==-1){
       printf("warning, failed to write output image\n");
     }
 
@@ -369,7 +370,7 @@ void run_console(char* net_name_path,int width,int height){
    if((strcmp(command_s[0],"identify")==0 || strcmp(command_s[0],"inout")==0) && command_s[1][0]!=0){
 
 
-      if(rescaled_read(command_s[1],memc.In,width,height,0)==-1){
+      if(rescaled_read(command_s[1],memc.In,width,height,multiplier)==-1){
         printf("failed to open image %s\n",command_s[1]);
 
       }else{
@@ -378,7 +379,7 @@ void run_console(char* net_name_path,int width,int height){
           print_mem_data(&memc,width,height);
         }else{
           if(command_s[2][0]!=0){
-             if(image_write(command_s[2],memc.Out,width,height,0) ==-1){
+             if(image_write(command_s[2],memc.Out,width,height,multiplier) ==-1){
               printf("warning, failed to write output image\n");
             }
           }else{
