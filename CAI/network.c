@@ -71,14 +71,13 @@ void propagate(float* inputs,struct nn* network){
   
   float* iptr_end = inputs + network -> output_size;
 
+  size_t clrsize = sizeof(float)*(network -> output_size);
+
   float* optr = network -> outputs;
   float* ostart = optr;
   float* oend = network -> outputs + network -> output_size;
 
-  while(optr < oend){
-    *optr = 0;
-    optr++;
-  }
+  memset(network -> outputs, 0, clrsize);
 
   float load;
 
