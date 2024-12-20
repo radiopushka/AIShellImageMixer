@@ -28,6 +28,27 @@ struct net_stack* setup_nn(int io_port_size,int activation,int depth){
   return top;
 }
 
+
+void get_last_values(struct net_stack* nst,float* to){
+  struct net_stack* prev = nst;
+  nst = nst -> next;
+  int osize = nst->contained->output_size;
+  while(nst != NULL){
+    prev = nst;
+    nst = nst -> next;
+  }
+
+  float* stp = prev -> contained -> outputs;
+  float* stpe = stp + osize;
+  for(;stp < stpe; stp++){
+    *to = *stp;
+    to++;
+  }
+
+
+
+}
+
 void nn_fwd(struct net_stack* nst,float* input, float* output){
 
   propagate(input,nst -> contained);

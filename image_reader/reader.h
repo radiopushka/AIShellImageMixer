@@ -1,7 +1,7 @@
 #ifndef PNGREADER
 #define PNGREADER
 
-int rescaled_read(char* image, float* R, float* G, float* B, int width,int height);
+int rescaled_read(char* image, float* Out, int width,int height,int RGB);
 
 //prepares the color layer for neural network propagation
 void prepare_data(float* color_info,int array_size);

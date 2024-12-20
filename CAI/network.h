@@ -4,10 +4,9 @@
 #include<stdio.h>
 
 #define ACTIVATION_TAN 0
-#define ACTIVATION_SIN 1
-#define ACTIVATION_COS 2
+#define ACTIVATION_LIN 1
+#define ACTIVATION_NIL 2
 #define ACTIVATION_SIG 3
-#define ACTIVATION_RELU 4
 
 
 struct nn{

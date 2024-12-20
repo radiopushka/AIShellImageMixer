@@ -28,6 +28,9 @@ int nn_size_d(struct net_stack* nst);
 //free the memory with the network
 void nn_free(struct net_stack* nst);
 
+//get the values from the last forward propagation
+void get_last_values(struct net_stack* nst, float* output);
+
 
 //file IO
 int nn_to_file(struct net_stack* nst,char* file);

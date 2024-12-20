@@ -15,7 +15,7 @@ int main(){
 
   
 
-  struct net_stack* nst = setup_nn(4,ACTIVATION_RELU,3);
+  struct net_stack* nst = setup_nn(4,ACTIVATION_TAN,1);
 
   float some_data[] = {0.5,1,0.5,1};
   float expected[] = {0,0,0,1};
@@ -27,19 +27,19 @@ int main(){
 
   float out_d[4];
 
-  struct net_stack* tmp_n = nn_from_file("network");
+  /*struct net_stack* tmp_n = nn_from_file("network");
 
   nn_fwd(tmp_n,some_data,out_d);
   print_array(out_d,4);
-  nn_free(tmp_n);
+  nn_free(tmp_n);*/
 
   //nn_dump(nst);
   printf("starting\n");
   int i;
 
-  for(i=0; i < 400; i++){
-    nn_back_prop(nst,some_data,expected,0.1);
-    nn_back_prop(nst,some_data2,expected2,0.1);
+  for(i=0; i < 10000; i++){
+    nn_back_prop(nst,some_data,expected,0.00001);
+    nn_back_prop(nst,some_data2,expected2,0.00001);
  
   }
   //nn_dump(nst);

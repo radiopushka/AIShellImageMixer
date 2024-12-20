@@ -5,7 +5,7 @@
 
 
 
-int rescaled_read(char* image,float* R,float* G, float* B,int width,int height){
+int rescaled_read(char* image,float* out,int width,int height,int RGB){
   FILE* im=fopen(image,"rb");
   if(!im)
     return -1;
@@ -53,12 +53,22 @@ int rescaled_read(char* image,float* R,float* G, float* B,int width,int height){
       i3=height-1;
     }
     for(i2=i1*xend;i2<(i1*xend+xend);){
-      *R=rows[i3][i4+2];
-      *G=rows[i3][i4+1];
-      *B=rows[i3][i4];
-      R++;
-      G++;
-      B++;
+      if(RGB==1){
+        *out=rows[i3][i4];
+        out++;
+        *out=rows[i3][i4+1];
+        out++;
+        *out=rows[i3][i4+2];
+        out++;
+
+      }else{
+        float sum=0;
+        sum= sum + rows[i3][i4];
+        sum= sum + rows[i3][i4+1];
+        sum= sum + rows[i3][i4+2];
+        *out = sum/3;
+        out++;
+      }
         i2++;
         i4=i4+mult;
       

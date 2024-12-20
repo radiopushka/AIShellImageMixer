@@ -8,12 +8,15 @@
 
 
 
-int image_write(char* image,float* R,float* G, float* B,int width,int height){
+int image_write(char* image,float* In,int width,int height,int RGB){
   FILE* im=fopen(image,"wb");
 
-  amplify_image(R,width*height);
-  amplify_image(G,width*height);
-  amplify_image(B,width*height);
+  if(RGB==1){
+
+    amplify_image(In,width*height*3);
+  }else{
+    amplify_image(In,width*height);
+  }
 
 
   if(!im)
@@ -43,12 +46,21 @@ int image_write(char* image,float* R,float* G, float* B,int width,int height){
 
   for(int i =0 ; i < height;i++){
     for(int i2 = 0; i2 < width*3;){
-      rows[i][i2++] = *B;
-      rows[i][i2++] = *G;
-      rows[i][i2++] = *R;
+      if(RGB==1){
+        rows[i][i2++] = *In;
+        In++;
+        rows[i][i2++] = *In;
+        In++;
+        rows[i][i2++] = *In;
+        In++;
+      }else{
+        rows[i][i2++] = *In;
+        rows[i][i2++] = *In;
+        rows[i][i2++] = *In;
+        In++;
 
+      }
       //printf(" %g %g %g",*B,*G,*R);
-      B++; R++; G++;
     }
   }
 

@@ -67,7 +67,7 @@ void print_net(struct nn* network){
 
 //forware propagation
 void propagate(float* inputs,struct nn* network){
-  float* iptr = inputs;
+  float* iptr;
   float* wpointer = network -> weights;
   
   float* iptr_end = inputs + network -> output_size;
@@ -83,22 +83,23 @@ void propagate(float* inputs,struct nn* network){
 
   float load;
 
-  while(iptr < iptr_end){
+  for(iptr=inputs;iptr < iptr_end;iptr++){
     load = *iptr;
     optr = ostart;
-    while(optr < oend){
+    for(optr=ostart;optr < oend;optr++){
       *optr = *optr + (load * (*wpointer));
       wpointer++;
-      optr++;
     }
-    iptr++;
   }
 }
 //activation function
 void activate(struct nn* network){
   int type = network -> activation_type;
 
+  if(type == ACTIVATION_NIL)
+    return;
 
+  float size = network -> output_size;
   float* optr = network -> outputs;
   float* oend = network -> outputs + network -> output_size;
 
@@ -107,19 +108,14 @@ void activate(struct nn* network){
       case ACTIVATION_TAN:
         *optr = 0.5+(atan(*optr))/PI;
         break;
-      case ACTIVATION_SIN:
-        if(*optr < 0)
-          *optr = 0;
-        else
-          *optr = sin(*optr);
+      case ACTIVATION_LIN:
+          *optr = (*optr)/size;
+          if(*optr>1)
+            *optr=1;
+          if(*optr<0)
+            *optr=0;
         break;
-      case ACTIVATION_COS:
-        if(*optr < 0)
-          *optr =0;
-        else
-          *optr = cos(*optr);
-        break;
-      case ACTIVATION_SIG:
+       case ACTIVATION_SIG:
         *optr = 1/(1+pow(EULER,-(*optr)));
         break;
     }
